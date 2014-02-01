@@ -2,12 +2,14 @@
 /**
  * Module dependencies.
  */
+'use strict';
 
 var express = require('express');
 var routes = require('./routes');
 var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
+var io = require('socket.io');
 
 var app = express();
 
@@ -40,9 +42,29 @@ if ('development' == app.get('env')) {
 app.get('/', routes.index);
 app.get('/users', user.list);
 app.get('/start/?', function(req,res){
-	res.render('game', {team:'red'});
+	res.render('game', {team:'orange'});
 })
 
-http.createServer(app).listen(app.get('port'), function(){
+var server =  http.createServer(app).listen(80/*app.get('port')*/, function(){
   console.log('Express server listening on port ' + app.get('port'));
+});
+io = io.listen(server);
+
+var clientList = new Array();
+io.sockets.on('connection', function (socket) {
+	console.log('got socket.io connection - id: %s', socket.id);
+	clientList.push(socket);
+
+	socket.on('chkAns', function(data){
+		console.log(data);
+		//chk ans
+		//if yes
+		updateAll(data);
+	})
+	socket.emit('update', 'aaaaa');
+	function updateAll(data){
+		for(var i = 0; i < clientList.length; i++){
+			clientList[i].emit('update',data);
+		}
+	}
 });

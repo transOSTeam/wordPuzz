@@ -1,6 +1,15 @@
 <hmtl>
 	<head>
-		<title>Crosswords</title>
+		<title>wordPuzz</title>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			var socket = io.connect('http://localhost');
+			socket.on('update', function (data) {
+				console.log(data);
+				
+			});
+			socket.emit('chkAns', { my: 'data' });
+		</script>
 	</head>
 	<body>
 		<p>Team: {{team}}</p>

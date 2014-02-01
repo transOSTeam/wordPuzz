@@ -1,0 +1,8 @@
+<hmtl>
+	<head>
+		<title>Crosswords</title>
+	</head>
+	<body>
+		<p>Team: {{team}}</p>
+	</body>
+</html>

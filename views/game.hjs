@@ -50,6 +50,8 @@
 				    boxes[i].addEventListener("mousedown", function(e){
 				    	e = e || window.event;
 				    	var thisBox = e.target;
+				    	if(!curSelLine)
+				    		curSelLine = new Array();
 				    	curSelLine.push(thisBox);
 				    	recording = true;
 				    	originBox = thisBox;
@@ -77,7 +79,8 @@
 				        e.preventDefault();
 				    });
 				    boxes[i].addEventListener("mouseup",function(e){
-				    	for(var i = 0; i < curSelLine.length; i++)
+				    	if(curSelLine)
+				    		for(var i = 0; i < curSelLine.length; i++)
 				    		curSelLine[i].classList.remove("selectedBox");
 				    	curSelLine = [];					//clear all - Clinic :D
 				    	recording = false;

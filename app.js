@@ -7,6 +7,7 @@
 var express = require('express');
 var routes = require('./routes');
 var user = require('./routes/user');
+var startGame = require('./routes/startGame');
 var http = require('http');
 var path = require('path');
 var io = require('socket.io');
@@ -41,11 +42,10 @@ if ('development' == app.get('env')) {
 
 app.get('/', routes.index);
 app.get('/users', user.list);
-app.get('/start/?', function(req,res){
-	res.render('game', {team:'orange'});
-})
+app.get('/start/?', startGame.start);
+app.get('/getPuzz', startGame.sendPuzz);
 
-var server =  http.createServer(app).listen(80/*app.get('port')*/, function(){
+var server =  http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
 io = io.listen(server);

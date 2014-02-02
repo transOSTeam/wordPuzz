@@ -1,17 +1,170 @@
 <hmtl>
 	<head>
 		<title>wordPuzz</title>
+		<link rel="stylesheet" type="text/css" href="/stylesheets/cssReset.css">
+		<link rel="stylesheet" type="text/css" href="/stylesheets/gameStyle.css">
+
 		<script src="/socket.io/socket.io.js"></script>
-		<script>
+		<script type="text/javascript">
 			var socket = io.connect('http://localhost');
 			socket.on('update', function (data) {
 				console.log(data);
 				
 			});
 			socket.emit('chkAns', { my: 'data' });
+
+			var jsonReq = new XMLHttpRequest();
+			jsonReq.open("GET", "/getPuzz", true);
+			jsonReq.send(null);
+			jsonReq.onreadystatechange = function(){
+				if (jsonReq.readyState == 4){
+					var puzzle = JSON.parse(jsonReq.responseText);
+					puzzle = puzzle.puzz;
+					kickStart(puzzle);
+					activateEventListeners();
+				}
+			}
+			function kickStart(puzzle){
+				var rowSize = {{rowSize}};
+				var i,j;
+				var puzzString = "<table id='puzzleTbl'>";
+				for (i = 0; i < rowSize; i++) {
+					puzzString += "<tr class='puzzTblRow'>"; 				//append
+					for(j = 0; j < rowSize; j++){
+						puzzString += "<td class='puzzleTblCol' id='"+i+"-"+j+"'>" + puzzle[i][j] + "</td>";		//append
+					}
+					puzzString += "</tr>";									//append
+				};
+				puzzString += "</table>";									//apend
+				var puzzleContainer = document.getElementById("puzzleContainer");
+				puzzleContainer.innerHTML = puzzString;
+			}
+
+			//event listeners start
+			function activateEventListeners(){
+				var boxes = document.getElementsByClassName("puzzleTblCol");
+				var curSelLine = new Array();
+				var recording = false;
+				var originBox = null;
+				for(var i = 0, j=boxes.length; i<j; i++){
+				    boxes[i].addEventListener("mousedown", function(e){
+				    	e = e || window.event;
+				    	var thisBox = e.target;
+				    	curSelLine.push(thisBox);
+				    	recording = true;
+				    	originBox = thisBox;
+				    	thisBox.classList.add("selectedBox");
+				    	e.preventDefault();
+				    })
+				    boxes[i].addEventListener("mouseover", function(e){
+				    	e = e || window.event;
+				    	var i;
+				    	thisBox = e.target;
+					    if(recording){
+					    	if(curSelLine != null)
+					    		for(var i = 0; i < curSelLine.length; i++)
+				    				curSelLine[i].classList.remove("selectedBox");
+					    	curSelLine = getLine(originBox, thisBox);
+					    	if(curSelLine != null)
+					    		for(i = 0; i < curSelLine.length; i++)
+					    			curSelLine[i].classList.add("selectedBox");
+					    }
+					    e.preventDefault();
+				    });
+
+				    boxes[i].addEventListener("mouseout", function(e){
+				    	e = e || window.event;
+				        e.preventDefault();
+				    });
+				    boxes[i].addEventListener("mouseup",function(e){
+				    	for(var i = 0; i < curSelLine.length; i++)
+				    		curSelLine[i].classList.remove("selectedBox");
+				    	curSelLine = [];					//clear all - Clinic :D
+				    	recording = false;
+				    	originBox = null;
+				    	e.preventDefault();
+				    })
+				}
+			}
+			function getLine(originBox, targetBox){
+				var line = null;
+				if(originBox != null){
+					var originBoxCord = originBox.id.split("-");
+					var targetBoxCord = targetBox.id.split("-");
+					
+					originBoxCord[0] = parseInt(originBoxCord[0]);
+					originBoxCord[1] = parseInt(originBoxCord[1]);
+
+					targetBoxCord[0] = parseInt(targetBoxCord[0]);
+					targetBoxCord[1] = parseInt(targetBoxCord[1]);
+					var startX, endX, startY, endY, temp;
+					if(originBoxCord[0] === targetBoxCord[0]){				//horizontal
+						line = new Array();
+						startY = originBoxCord[1];
+						endY = targetBoxCord[1];
+						if(startY > endY){
+							startY = endY;
+							endY = originBoxCord[1];
+						}
+						for(;startY <= endY; startY++)
+							line.push(document.getElementById(originBoxCord[0]+"-"+startY))				//my computer is fast and has lot of memory
+					}
+					else if(originBoxCord[1] == targetBoxCord[1]){				//vertical
+						line = new Array();
+						startX = originBoxCord[0];
+						endX = targetBoxCord[0];
+						if(startX > endX){
+							startX = endX;
+							endX = originBoxCord[0];
+						}
+						for(;startX <= endX; startX++)
+							line.push(document.getElementById(startX+"-"+originBoxCord[1]));				//my computer is fast and has lot of memory	
+					}
+					else if(targetBoxCord[0] - originBoxCord[0] === targetBoxCord[1] - originBoxCord[1]){							//digonal
+						line = new Array();
+						startX = originBoxCord[0];
+						startY = originBoxCord[1];
+
+						endX = targetBoxCord[0];
+						endY = targetBoxCord[1];
+						if(startX > endX){
+							startX = endX;
+							startY = endY;
+
+							endX = originBoxCord[0];
+							endY = originBoxCord[1];
+						}
+						for(;startX <= endX, startY <= endY; startX++, startY++){
+							line.push(document.getElementById(startX+"-"+startY));
+						}
+					}
+					else if(targetBoxCord[0] - originBoxCord[0] === -1 * (targetBoxCord[1] - originBoxCord[1])){
+						line = new Array();
+						startX = originBoxCord[0];
+						startY = originBoxCord[1];
+
+						endX = targetBoxCord[0];
+						endY = targetBoxCord[1];
+
+						if(startX > endX){
+							startX = endX;
+							startY = endY;
+
+							endX = originBoxCord[0];
+							endY = originBoxCord[1];
+						}
+						for(;startX <= endX, startY >= endY; startX++, startY--){
+							line.push(document.getElementById(startX+"-"+startY));
+						}
+					}
+				}
+				return line;
+			}
 		</script>
 	</head>
 	<body>
-		<p>Team: {{team}}</p>
+		<h2>WordPuzz</h2>
+		<h3>Team: {{team}}</h3>
+		<div id="puzzleContainer"></div>
 	</body>
 </html>

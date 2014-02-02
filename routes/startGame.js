@@ -4,6 +4,7 @@ var puzzle;						//global!
 var dictionary;
 var puzzleFilePath = "public/puzzles/puzz1.txt"
 var clientList = new Array();
+var scoreList = new Array();
 fs = require('fs');
 
 exports.initGame = function(){
@@ -18,7 +19,18 @@ exports.initGame = function(){
 }
 
 exports.start = function(req,res){
-	res.render('game', {team:'orange'});
+	if(!req.session.name)
+		res.redirect("/");
+	else
+		res.render('game', {player: req.session.name});
+}
+
+exports.newUser = function(req, res){
+	var playerName = req.body.playerName;
+	scoreList.push({playerName : 0});
+	req.session.name = playerName;
+	req.session.score = 0;
+	res.redirect("/start")
 }
 
 exports.sendPuzz = function(req,res){
@@ -26,18 +38,16 @@ exports.sendPuzz = function(req,res){
 }
 
 exports.sockOnConnection = function (socket) {
-	console.log('got socket.io connection - id: %s', socket.id);
 	clientList.push(socket);
 
 	socket.on('chkAns', function(data){
-		console.log(data);
-		if(chkAns(data))
+		if(chkAns(data)){
 			updateAll(data);
+			scoreList[data.playerName]++;
+		}
 	})
 	function updateAll(data){
-		console.log("word found->updating" + clientList)
 		for(var i = 0; i < clientList.length; i++){
-			console.log("updating -> " + clientList[i])
 			clientList[i].emit('update',data);
 		}
 	}

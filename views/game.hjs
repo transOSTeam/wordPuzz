@@ -7,8 +7,13 @@
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="text/javascript">
 			var socket = io.connect('http://localhost');
+			var playerName = "{{player}}";
+			window.onload = function(){
+				var successSound = document.getElementById("successSound");
+			}
 			socket.on('update', function (data) {
-				console.log("got update")
+				if(data.playerName == playerName)
+					successSound.play();
 				var startPt = data.startPt.split('-');
 				var endPt = data.endPt.split('-');
 				updatePuzzle(startPt,endPt);
@@ -142,7 +147,7 @@
 				    });
 				    boxes[i].addEventListener("mouseup",function(e){
 				    	if(curSelLine){
-				    		socket.emit('chkAns', { startPt: curSelLine[0].id, endPt : curSelLine[curSelLine.length - 1].id });
+				    		socket.emit('chkAns', { playerName: playerName ,startPt: curSelLine[0].id, endPt : curSelLine[curSelLine.length - 1].id });
 				    		for(var i = 0; i < curSelLine.length; i++)
 				    		curSelLine[i].classList.remove("selectedBox");
 				    	}
@@ -184,40 +189,27 @@
 					}
 					else if(targetBoxCord[0] - originBoxCord[0] === targetBoxCord[1] - originBoxCord[1]){							//digonal
 						line = new Array();
-						startX = originBoxCord[0];
-						originBoxCord[1] = originBoxCord[1];
 
-						endX = targetBoxCord[0];
-						endY = targetBoxCord[1];
-						if(startX > endX){
-							startX = endX;
-							originBoxCord[1] = endY;
-
-							endX = originBoxCord[0];
-							endY = originBoxCord[1];
-						}
-						for(;startX <= endX, originBoxCord[1] <= endY; startX++, originBoxCord[1]++){
-							line.push(document.getElementById(startX+"-"+originBoxCord[1]));
-						}
+						if(originBoxCord[0] > targetBoxCord[0])				//north west
+							for(;originBoxCord[0] >= targetBoxCord[0] && originBoxCord[1] >= targetBoxCord[1]; originBoxCord[0]--, originBoxCord[1]--){
+								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]));
+							}
+						else 												//south east
+							for(;originBoxCord[0] <= targetBoxCord[0] && originBoxCord[1] <= targetBoxCord[1]; originBoxCord[0]++, originBoxCord[1]++){
+								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]));
+							}
 					}
 					else if(targetBoxCord[0] - originBoxCord[0] === -1 * (targetBoxCord[1] - originBoxCord[1])){
 						line = new Array();
-						startX = originBoxCord[0];
-						originBoxCord[1] = originBoxCord[1];
-
-						endX = targetBoxCord[0];
-						endY = targetBoxCord[1];
-
-						if(startX > endX){
-							startX = endX;
-							originBoxCord[1] = endY;
-
-							endX = originBoxCord[0];
-							endY = originBoxCord[1];
-						}
-						for(;startX <= endX, originBoxCord[1] >= endY; startX++, originBoxCord[1]--){
-							line.push(document.getElementById(startX+"-"+originBoxCord[1]));
-						}
+						
+						if(originBoxCord[0] > targetBoxCord[0])				//north east
+							for(;originBoxCord[0] >= targetBoxCord[0] && originBoxCord[1] <= targetBoxCord[1]; originBoxCord[0]--, originBoxCord[1]++){
+								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]));
+							}
+						else
+							for(;originBoxCord[0] <= targetBoxCord[0] && originBoxCord[1] >= targetBoxCord[1]; originBoxCord[0]++, originBoxCord[1]--){
+								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]));
+							}
 					}
 				}
 				return line;
@@ -226,7 +218,10 @@
 	</head>
 	<body>
 		<h2>WordPuzz</h2>
-		<h3>Team: {{team}}</h3>
+		<h3>Player: {{player}}</h3>
 		<div id="puzzleContainer"></div>
+		<audio id="successSound">
+			<source src="/resources/success.wav" type="audio/mpeg">
+		</audio>
 	</body>
 </html>

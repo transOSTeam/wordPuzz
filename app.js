@@ -23,7 +23,9 @@ app.use(express.logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(express.methodOverride());
-app.use(express.cookieParser('your secret here'));
+app.use(express.cookieParser('your secret here and there'));
+app.use(express.session({ secret: 'a top secret thing' }));
+app.use(express.bodyParser());
 app.use(express.session());
 app.use(app.router);
 app.use(require('less-middleware')({ src: path.join(__dirname, 'public') }));
@@ -44,6 +46,8 @@ app.get('/', routes.index);
 app.get('/users', user.list);
 app.get('/start/?', startGame.start);
 app.get('/getPuzz', startGame.sendPuzz);
+
+app.post('/start', startGame.newUser);
 
 var server =  http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));

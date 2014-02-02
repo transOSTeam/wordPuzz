@@ -50,21 +50,5 @@ var server =  http.createServer(app).listen(app.get('port'), function(){
 });
 io = io.listen(server);
 
-var clientList = new Array();
-io.sockets.on('connection', function (socket) {
-	console.log('got socket.io connection - id: %s', socket.id);
-	clientList.push(socket);
-
-	socket.on('chkAns', function(data){
-		console.log(data);
-		//chk ans
-		//if yes
-		updateAll(data);
-	})
-	socket.emit('update', 'aaaaa');
-	function updateAll(data){
-		for(var i = 0; i < clientList.length; i++){
-			clientList[i].emit('update',data);
-		}
-	}
-});
+startGame.initGame();
+io.sockets.on('connection', startGame.sockOnConnection);

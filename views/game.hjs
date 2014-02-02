@@ -8,11 +8,73 @@
 		<script type="text/javascript">
 			var socket = io.connect('http://localhost');
 			socket.on('update', function (data) {
-				console.log(data);
-				
+				console.log("got update")
+				var startPt = data.startPt.split('-');
+				var endPt = data.endPt.split('-');
+				updatePuzzle(startPt,endPt);
 			});
-			socket.emit('chkAns', { my: 'data' });
-
+			function updatePuzzle(startPt,endPt){
+				startPt[0] = parseInt(startPt[0]);
+				startPt[1] = parseInt(startPt[1]);
+				endPt[0] = parseInt(endPt[0]);
+				endPt[1] = parseInt(endPt[1]);
+				var tempId;
+				var tempBox;
+				if(startPt[0] == endPt[0]){			//horizontal
+					if(startPt[1] < endPt[1]){				//go right
+						for(;startPt[1] <= endPt[1]; startPt[1]++){
+							tempId = startPt[0] + "-" + startPt[1];
+							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+						}
+					}
+					else {									//go left
+						for(;startPt[1] >= endPt[1]; startPt[1]--){
+							tempId = startPt[0] + "-" + startPt[1];
+							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+						}
+					}
+				}
+				else if(startPt[1] == endPt[1]){		//vertical
+					if(startPt[0] < endPt[0]){
+						for(;startPt[0] <= endPt[0]; startPt[0]++){
+							tempId = startPt[0] + "-" + startPt[1];
+							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+						}
+					}
+					else {
+						for(;startPt[0] >= endPt[0]; startPt[0]--){
+							tempId = startPt[0] + "-" + startPt[1];
+							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+						}
+					}
+				}
+				else {									//diagonal
+					if(startPt[0] < endPt[0] && startPt[1] < endPt[1]){					//go south east
+						for(;startPt[0] <= endPt[0] && startPt[1] <= endPt[1]; startPt[0]++, startPt[1]++){
+							tempId = startPt[0] + "-" + startPt[1];
+							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+						}
+					}
+					else if(startPt[0] > endPt[0] && startPt[1] > endPt[1]){					//go north west
+						for(;startPt[0] >= endPt[0] && startPt[1] >= endPt[1]; startPt[0]--, startPt[1]--){
+							tempId = startPt[0] + "-" + startPt[1];
+							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+						}
+					}
+					else if(startPt[0] < endPt[0] && startPt[1] > endPt[1]){					//go south west
+						for(;startPt[0] <= endPt[0] && startPt[1] >= endPt[1]; startPt[0]++, startPt[1]--){
+							tempId = startPt[0] + "-" + startPt[1];
+							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+						}
+					}
+					else if(startPt[0] > endPt[0] && startPt[1] < endPt[1]){					//go north east
+						for(;startPt[0] >= endPt[0] && startPt[1] <= endPt[1]; startPt[0]--, startPt[1]++){
+							tempId = startPt[0] + "-" + startPt[1];
+							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+						}
+					}
+				}
+			}
 			var jsonReq = new XMLHttpRequest();
 			jsonReq.open("GET", "/getPuzz", true);
 			jsonReq.send(null);
@@ -25,7 +87,7 @@
 				}
 			}
 			function kickStart(puzzle){
-				var rowSize = {{rowSize}};
+				var rowSize = puzzle.length;
 				var i,j;
 				var puzzString = "<table id='puzzleTbl'>";
 				for (i = 0; i < rowSize; i++) {
@@ -79,9 +141,11 @@
 				        e.preventDefault();
 				    });
 				    boxes[i].addEventListener("mouseup",function(e){
-				    	if(curSelLine)
+				    	if(curSelLine){
+				    		socket.emit('chkAns', { startPt: curSelLine[0].id, endPt : curSelLine[curSelLine.length - 1].id });
 				    		for(var i = 0; i < curSelLine.length; i++)
 				    		curSelLine[i].classList.remove("selectedBox");
+				    	}
 				    	curSelLine = [];					//clear all - Clinic :D
 				    	recording = false;
 				    	originBox = null;
@@ -100,64 +164,59 @@
 
 					targetBoxCord[0] = parseInt(targetBoxCord[0]);
 					targetBoxCord[1] = parseInt(targetBoxCord[1]);
-					var startX, endX, startY, endY, temp;
 					if(originBoxCord[0] === targetBoxCord[0]){				//horizontal
 						line = new Array();
-						startY = originBoxCord[1];
-						endY = targetBoxCord[1];
-						if(startY > endY){
-							startY = endY;
-							endY = originBoxCord[1];
-						}
-						for(;startY <= endY; startY++)
-							line.push(document.getElementById(originBoxCord[0]+"-"+startY))				//my computer is fast and has lot of memory
+						if(originBoxCord[1] < targetBoxCord[1])
+							for(;originBoxCord[1] <= targetBoxCord[1]; originBoxCord[1]++)
+								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]))				//my computer is fast and has lot of memory
+						else
+							for(;originBoxCord[1] >= targetBoxCord[1]; originBoxCord[1]--)
+								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]))
 					}
 					else if(originBoxCord[1] == targetBoxCord[1]){				//vertical
 						line = new Array();
-						startX = originBoxCord[0];
-						endX = targetBoxCord[0];
-						if(startX > endX){
-							startX = endX;
-							endX = originBoxCord[0];
-						}
-						for(;startX <= endX; startX++)
-							line.push(document.getElementById(startX+"-"+originBoxCord[1]));				//my computer is fast and has lot of memory	
+						if(originBoxCord[0] < targetBoxCord[0])
+							for(;originBoxCord[0] <= targetBoxCord[0]; originBoxCord[0]++)
+								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]))				//my computer is fast and has lot of memory
+						else
+							for(;originBoxCord[0] >= targetBoxCord[0]; originBoxCord[0]--)
+								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]))
 					}
 					else if(targetBoxCord[0] - originBoxCord[0] === targetBoxCord[1] - originBoxCord[1]){							//digonal
 						line = new Array();
 						startX = originBoxCord[0];
-						startY = originBoxCord[1];
+						originBoxCord[1] = originBoxCord[1];
 
 						endX = targetBoxCord[0];
 						endY = targetBoxCord[1];
 						if(startX > endX){
 							startX = endX;
-							startY = endY;
+							originBoxCord[1] = endY;
 
 							endX = originBoxCord[0];
 							endY = originBoxCord[1];
 						}
-						for(;startX <= endX, startY <= endY; startX++, startY++){
-							line.push(document.getElementById(startX+"-"+startY));
+						for(;startX <= endX, originBoxCord[1] <= endY; startX++, originBoxCord[1]++){
+							line.push(document.getElementById(startX+"-"+originBoxCord[1]));
 						}
 					}
 					else if(targetBoxCord[0] - originBoxCord[0] === -1 * (targetBoxCord[1] - originBoxCord[1])){
 						line = new Array();
 						startX = originBoxCord[0];
-						startY = originBoxCord[1];
+						originBoxCord[1] = originBoxCord[1];
 
 						endX = targetBoxCord[0];
 						endY = targetBoxCord[1];
 
 						if(startX > endX){
 							startX = endX;
-							startY = endY;
+							originBoxCord[1] = endY;
 
 							endX = originBoxCord[0];
 							endY = originBoxCord[1];
 						}
-						for(;startX <= endX, startY >= endY; startX++, startY--){
-							line.push(document.getElementById(startX+"-"+startY));
+						for(;startX <= endX, originBoxCord[1] >= endY; startX++, originBoxCord[1]--){
+							line.push(document.getElementById(startX+"-"+originBoxCord[1]));
 						}
 					}
 				}

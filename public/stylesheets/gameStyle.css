@@ -32,3 +32,6 @@ h3 {
 .selectedBox {
   background-color: #ff9933;
 }
+.solvedBox {
+  background-color: #66ff66;
+}

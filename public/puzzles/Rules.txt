@@ -1,0 +1,2 @@
+Rules:
+1. Any and every word greater then 3 letters are allowed.

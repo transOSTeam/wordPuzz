@@ -11,7 +11,7 @@
     	<h4>Rules:</h4>
 	    <ul>
 	    	<li>Any and every word greater then 3 letters are allowed.</li>
-	    	<li><img src="/images/8_direction.png"> You can go up, down, left, right along diagonals, any side you wish.</li>
+	    	<li><img src="/images/8_direction.png"> You can go up, down, left, right along diagonals, any direction you wish.</li>
 	    </ul>
     </div>
     <div id="playerFormContainer">

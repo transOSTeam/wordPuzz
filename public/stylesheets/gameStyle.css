@@ -14,6 +14,7 @@ h3 {
 }
 #puzzleContainer {
   margin: 40px 0;
+  text-align: center;
 }
 #puzzleContainer #puzzleTbl {
   margin: auto;
@@ -34,4 +35,7 @@ h3 {
 }
 .solvedBox {
   background-color: #66ff66;
+}
+.someOtherSolvedBox {
+  background-color: #ffcccc;
 }

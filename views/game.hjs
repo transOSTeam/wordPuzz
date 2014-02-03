@@ -8,17 +8,47 @@
 		<script type="text/javascript">
 			var socket = io.connect('http://localhost');
 			var playerName = "{{player}}";
+			var isCaptain = {{captain}};
 			window.onload = function(){
 				var successSound = document.getElementById("successSound");
+				var errorSound = document.getElementById("errorSound");
+				if(isCaptain){
+					var startButton = document.createElement("BUTTON");
+					startButton.innerHTML = "start game";
+					startButton.onclick = function(){
+						socket.emit('startGame', {playerName:playerName});
+					};
+					puzzleContainer.appendChild(startButton);
+				}
+				else{
+					puzzleContainer.innerHTML = "<p>Waiting for server to start the game...</p>";
+				}
 			}
 			socket.on('update', function (data) {
-				if(data.playerName == playerName)
+				var classType;
+				if(data.playerName == playerName){
 					successSound.play();
+					classType = "solvedBox";
+				}
+				else
+					classType = "someOtherSolvedBox"
 				var startPt = data.startPt.split('-');
 				var endPt = data.endPt.split('-');
-				updatePuzzle(startPt,endPt);
+				updatePuzzle(startPt,endPt,classType);
 			});
-			function updatePuzzle(startPt,endPt){
+			socket.on('gameOver',function(data){
+				var scoreList = document.createElement("ol");
+				var playerName, listItem;
+				puzzleContainer.innerHTML = "";
+				for(playerName in data){
+					console.log(data)
+					listItem = document.createElement("li");
+					listItem.innerHTML = playerName + " -> " + data[playerName];
+					scoreList.appendChild(listItem); 
+				}
+				puzzleContainer.appendChild(scoreList);
+			})
+			function updatePuzzle(startPt,endPt,classType){
 				startPt[0] = parseInt(startPt[0]);
 				startPt[1] = parseInt(startPt[1]);
 				endPt[0] = parseInt(endPt[0]);
@@ -29,13 +59,13 @@
 					if(startPt[1] < endPt[1]){				//go right
 						for(;startPt[1] <= endPt[1]; startPt[1]++){
 							tempId = startPt[0] + "-" + startPt[1];
-							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+							tempBox = document.getElementById(tempId).classList.add(classType);
 						}
 					}
 					else {									//go left
 						for(;startPt[1] >= endPt[1]; startPt[1]--){
 							tempId = startPt[0] + "-" + startPt[1];
-							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+							tempBox = document.getElementById(tempId).classList.add(classType);
 						}
 					}
 				}
@@ -43,13 +73,13 @@
 					if(startPt[0] < endPt[0]){
 						for(;startPt[0] <= endPt[0]; startPt[0]++){
 							tempId = startPt[0] + "-" + startPt[1];
-							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+							tempBox = document.getElementById(tempId).classList.add(classType);
 						}
 					}
 					else {
 						for(;startPt[0] >= endPt[0]; startPt[0]--){
 							tempId = startPt[0] + "-" + startPt[1];
-							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+							tempBox = document.getElementById(tempId).classList.add(classType);
 						}
 					}
 				}
@@ -57,25 +87,25 @@
 					if(startPt[0] < endPt[0] && startPt[1] < endPt[1]){					//go south east
 						for(;startPt[0] <= endPt[0] && startPt[1] <= endPt[1]; startPt[0]++, startPt[1]++){
 							tempId = startPt[0] + "-" + startPt[1];
-							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+							tempBox = document.getElementById(tempId).classList.add(classType);
 						}
 					}
 					else if(startPt[0] > endPt[0] && startPt[1] > endPt[1]){					//go north west
 						for(;startPt[0] >= endPt[0] && startPt[1] >= endPt[1]; startPt[0]--, startPt[1]--){
 							tempId = startPt[0] + "-" + startPt[1];
-							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+							tempBox = document.getElementById(tempId).classList.add(classType);
 						}
 					}
 					else if(startPt[0] < endPt[0] && startPt[1] > endPt[1]){					//go south west
 						for(;startPt[0] <= endPt[0] && startPt[1] >= endPt[1]; startPt[0]++, startPt[1]--){
 							tempId = startPt[0] + "-" + startPt[1];
-							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+							tempBox = document.getElementById(tempId).classList.add(classType);
 						}
 					}
 					else if(startPt[0] > endPt[0] && startPt[1] < endPt[1]){					//go north east
 						for(;startPt[0] >= endPt[0] && startPt[1] <= endPt[1]; startPt[0]--, startPt[1]++){
 							tempId = startPt[0] + "-" + startPt[1];
-							tempBox = document.getElementById(tempId).classList.add("solvedBox");
+							tempBox = document.getElementById(tempId).classList.add(classType);
 						}
 					}
 				}
@@ -86,9 +116,11 @@
 			jsonReq.onreadystatechange = function(){
 				if (jsonReq.readyState == 4){
 					var puzzle = JSON.parse(jsonReq.responseText);
-					puzzle = puzzle.puzz;
-					kickStart(puzzle);
-					activateEventListeners();
+					socket.on('startGame', function(){
+						puzzle = puzzle.puzz;
+						kickStart(puzzle);
+						activateEventListeners();
+					});
 				}
 			}
 			function kickStart(puzzle){
@@ -147,9 +179,15 @@
 				    });
 				    boxes[i].addEventListener("mouseup",function(e){
 				    	if(curSelLine){
-				    		socket.emit('chkAns', { playerName: playerName ,startPt: curSelLine[0].id, endPt : curSelLine[curSelLine.length - 1].id });
-				    		for(var i = 0; i < curSelLine.length; i++)
-				    		curSelLine[i].classList.remove("selectedBox");
+				    		if((curSelLine[0].classList.contains("solvedBox") && curSelLine[curSelLine.length-1].classList.contains("solvedBox"))
+							|| (curSelLine[0].classList.contains("someOtherSolvedBox") && curSelLine[curSelLine.length-1].classList.contains("someOtherSolvedBox"))){
+								errorSound.play();
+							}
+							else{
+								socket.emit('chkAns', { playerName: playerName ,startPt: curSelLine[0].id, endPt : curSelLine[curSelLine.length - 1].id });
+					    		for(var i = 0; i < curSelLine.length; i++)
+					    		curSelLine[i].classList.remove("selectedBox");
+							}
 				    	}
 				    	curSelLine = [];					//clear all - Clinic :D
 				    	recording = false;
@@ -211,8 +249,8 @@
 								line.push(document.getElementById(originBoxCord[0]+"-"+originBoxCord[1]));
 							}
 					}
+					return line;
 				}
-				return line;
 			}
 		</script>
 	</head>
@@ -222,6 +260,9 @@
 		<div id="puzzleContainer"></div>
 		<audio id="successSound">
 			<source src="/resources/success.wav" type="audio/mpeg">
+		</audio>
+		<audio id="errorSound">
+			<source src="/resources/error.wav" type="audio/mpeg">
 		</audio>
 	</body>
 </html>

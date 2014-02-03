@@ -5,6 +5,9 @@ var dictionary;
 var puzzleFilePath = "public/puzzles/puzz1.txt"
 var clientList = new Array();
 var scoreList = new Array();
+var gameStarted = false;
+var gameTime = 30 * 1000;
+var captainName;
 fs = require('fs');
 
 exports.initGame = function(){
@@ -21,13 +24,27 @@ exports.initGame = function(){
 exports.start = function(req,res){
 	if(!req.session.name)
 		res.redirect("/");
-	else
-		res.render('game', {player: req.session.name});
+	else if(gameStarted)
+		res.render('error', {errorMsg: "Sorry game has started"});
+	else{
+		var captain = true;
+		var temp, i = 0;
+		for(temp in scoreList){				//just to check if array is empty
+			i++;
+			if(i > 1){
+				captain = false;
+				break;
+			}
+		}
+		if(captain)
+			captainName = req.session.name;
+		res.render('game', {player: req.session.name, captain : captain});
+	}
 }
 
-exports.newUser = function(req, res){
+exports.newUser = function(req, res){				// post on /start
 	var playerName = req.body.playerName;
-	scoreList.push({playerName : 0});
+	scoreList[playerName] = 0;
 	req.session.name = playerName;
 	req.session.score = 0;
 	res.redirect("/start")
@@ -42,10 +59,28 @@ exports.sockOnConnection = function (socket) {
 
 	socket.on('chkAns', function(data){
 		if(chkAns(data)){
+			console.log(scoreList)
 			updateAll(data);
 			scoreList[data.playerName]++;
 		}
 	})
+	socket.on('startGame', function(data){
+		var name = data.playerName;
+		if(name == captainName){
+			for(var i = 0; i < clientList.length; i++){
+				clientList[i].emit('startGame',data);
+			}
+			setTimeout(function(){
+				console.log(scoreList)
+				for(var i = 0; i < clientList.length; i++){
+					clientList[i].emit('gameOver',scoreList);
+					//delete(clientList);
+					//delete(scoreList);
+					//gameStarted = false;
+				}
+			},gameTime);
+		}
+	});
 	function updateAll(data){
 		for(var i = 0; i < clientList.length; i++){
 			clientList[i].emit('update',data);

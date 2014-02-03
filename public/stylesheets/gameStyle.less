@@ -1,6 +1,7 @@
 @boxSize : 50px;
 @selectedBoxColor: #FF9933;
 @solvedBoxColor: #66FF66;
+@someOtherSolvedBox: #FFCCCC;
 body {
 	font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
@@ -17,6 +18,7 @@ h3 {
 }
 #puzzleContainer{
 	margin: 40px 0;
+	text-align: center;
 	#puzzleTbl {
 		margin: auto;
 		tr{
@@ -39,4 +41,7 @@ h3 {
 
 .solvedBox {
 	background-color: @solvedBoxColor;
+}
+.someOtherSolvedBox {
+	background-color: @someOtherSolvedBox;
 }

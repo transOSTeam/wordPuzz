@@ -4,7 +4,6 @@ var puzzle;						//global!
 var dictionary;
 var puzzleFilePath = "public/puzzles/puzz1.txt"
 var clientList = new Array();
-var scoreList = new Array();
 var gameStarted = false;
 var gameTime = 30 * 1000;
 var captainName;
@@ -27,24 +26,33 @@ exports.start = function(req,res){
 	else if(gameStarted)
 		res.render('error', {errorMsg: "Sorry game has started"});
 	else{
-		var captain = true;
-		var temp, i = 0;
-		for(temp in scoreList){				//just to check if array is empty
-			i++;
-			if(i > 1){
-				captain = false;
-				break;
-			}
+		if(!gameStarted){
+			gameStarted = true;				// to-do 5feb: what to do here....
+			setTimeout(function(){
+				for(var i = 0; i < clientList.length; i++){
+					clientList[i].emit('gameOver',playerList);			//prob is here. make this as object
+					delete(clientList);
+					delete(playerList);
+					gameStarted = false;
+				}
+			},gameTime);
 		}
-		if(captain)
+		var captain = false;
+		var temp, i = 0;
+		if(playerList[0].name === req.session.name){
 			captainName = req.session.name;
+			captain = true;
+		}
 		res.render('game', {player: req.session.name, captain : captain});
 	}
 }
 
 exports.newUser = function(req, res){				// post on /start
 	var playerName = req.body.playerName;
-	scoreList[playerName] = 0;
+	var newPlayer = new Player();
+	newPlayer.name = playerName;
+	newPlayer.score = 0;
+	playerList.push(newPlayer);
 	req.session.name = playerName;
 	req.session.score = 0;
 	res.redirect("/start")
@@ -59,9 +67,8 @@ exports.sockOnConnection = function (socket) {
 
 	socket.on('chkAns', function(data){
 		if(chkAns(data)){
-			console.log(scoreList)
 			updateAll(data);
-			scoreList[data.playerName]++;
+			playerList.incScore(data.playerName, 1);
 		}
 	})
 	socket.on('startGame', function(data){
@@ -71,12 +78,11 @@ exports.sockOnConnection = function (socket) {
 				clientList[i].emit('startGame',data);
 			}
 			setTimeout(function(){
-				console.log(scoreList)
 				for(var i = 0; i < clientList.length; i++){
-					clientList[i].emit('gameOver',scoreList);
-					//delete(clientList);
-					//delete(scoreList);
-					//gameStarted = false;
+					clientList[i].emit('gameOver',playerList);			//prob is here. make this as object
+					delete(clientList);
+					delete(playerList);
+					gameStarted = false;
 				}
 			},gameTime);
 		}
@@ -177,4 +183,19 @@ function readPuzzle(puzzleFilePath){
 			puzzle.push(lines[i].split("\t"));
 		}
 	});
+}
+
+function Player(){};
+Player.prototype.name = 'player';
+Player.prototype.score = 0;
+
+var playerList = new Array();
+playerList.incScore = function(name,incFactor){
+	var i;
+	for(i = 0; i < this.length; i++){
+		if(this[i].name === name){
+			this[i].score += incFactor;
+			break;
+		}
+	}
 }

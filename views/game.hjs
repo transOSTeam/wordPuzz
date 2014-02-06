@@ -38,12 +38,11 @@
 			});
 			socket.on('gameOver',function(data){
 				var scoreList = document.createElement("ol");
-				var playerName, listItem;
+				var i, listItem;
 				puzzleContainer.innerHTML = "";
-				for(playerName in data){
-					console.log(data)
+				for(i in data){
 					listItem = document.createElement("li");
-					listItem.innerHTML = playerName + " -> " + data[playerName];
+					listItem.innerHTML = data[i].name + " -> " + data[i].score;
 					scoreList.appendChild(listItem); 
 				}
 				puzzleContainer.appendChild(scoreList);

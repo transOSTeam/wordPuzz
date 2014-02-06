@@ -1,0 +1,8 @@
+<html>
+<head>
+	<title>Wordpuzz</title>
+</head>
+<body>
+	<p>{{errorMsg}}</p>
+</body>
+</html>

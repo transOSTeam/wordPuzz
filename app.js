@@ -52,11 +52,7 @@ app.post('/start', startGame.newUser);
 var server =  http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
-
 io = io.listen(server);
-io.configure(function () { 
-  io.set("transports", ["xhr-polling"]); 
-  io.set("polling duration", 10); 
-});
+
 startGame.initGame();
 io.sockets.on('connection', startGame.sockOnConnection);

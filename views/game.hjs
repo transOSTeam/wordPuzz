@@ -6,7 +6,7 @@
 
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="text/javascript">
-			var socket = io.connect('http://wordpuzz.herokuapp.com');
+			var socket = io.connect('http://{{hostName}}');
 			var playerName = "{{player}}";
 			var isCaptain = {{captain}};
 			window.onload = function(){
@@ -41,9 +41,11 @@
 				var i, listItem;
 				puzzleContainer.innerHTML = "";
 				for(i in data){
-					listItem = document.createElement("li");
-					listItem.innerHTML = data[i].name + " -> " + data[i].score;
-					scoreList.appendChild(listItem); 
+					if(typeof(data[i]) === 'object'){
+						listItem = document.createElement("li");
+						listItem.innerHTML = data[i].name + " -> " + data[i].score;
+						scoreList.appendChild(listItem); 
+					}
 				}
 				puzzleContainer.appendChild(scoreList);
 			})

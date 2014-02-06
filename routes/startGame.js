@@ -3,11 +3,29 @@ rowSize = 20;				//global
 var puzzle;						//global!
 var dictionary;
 var puzzleFilePath = "public/puzzles/puzz1.txt"
-var clientList = new Array();
+var clientList;
 var gameStarted = false;
 var gameTime = 30 * 1000;
 var captainName;
 fs = require('fs');
+
+
+function Player(){};
+Player.prototype.name = 'player';
+Player.prototype.score = 0;
+
+var PlayerList = function(){};
+PlayerList.prototype = new Array();
+PlayerList.prototype.incScore = function(name,incFactor){
+	var i;
+	for(i = 0; i < this.length; i++){
+		if(this[i].name === name){
+			this[i].score += incFactor;
+			break;
+		}
+	}
+}
+var playerList;
 
 exports.initGame = function(){
 	//generatePuzzle(rowSize);			//populate global variable puzzle
@@ -17,7 +35,11 @@ exports.initGame = function(){
 			return console.log(err);
 		}
 		dictionary = data.split("\n");
-	});	
+	});
+	if(!clientList)
+		clientList = new Array();
+	if(typeof(playerList) === 'undefined' || playerList === null)
+		playerList = new PlayerList();
 }
 
 exports.start = function(req,res){
@@ -26,24 +48,17 @@ exports.start = function(req,res){
 	else if(gameStarted)
 		res.render('error', {errorMsg: "Sorry game has started"});
 	else{
-		if(!gameStarted){
-			gameStarted = true;				// to-do 5feb: what to do here....
-			setTimeout(function(){
-				for(var i = 0; i < clientList.length; i++){
-					clientList[i].emit('gameOver',playerList);			//prob is here. make this as object
-					delete(clientList);
-					delete(playerList);
-					gameStarted = false;
-				}
-			},gameTime);
-		}
 		var captain = false;
 		var temp, i = 0;
+		if(!clientList)
+			clientList = new Array();
+		if(!playerList)
+			playerList = new PlayerList();
 		if(playerList[0].name === req.session.name){
 			captainName = req.session.name;
 			captain = true;
 		}
-		res.render('game', {player: req.session.name, captain : captain});
+		res.render('game', {player: req.session.name, captain : captain, hostName : req.headers.host});
 	}
 }
 
@@ -72,24 +87,29 @@ exports.sockOnConnection = function (socket) {
 		}
 	})
 	socket.on('startGame', function(data){
+		gameStarted = true;	
 		var name = data.playerName;
 		if(name == captainName){
 			for(var i = 0; i < clientList.length; i++){
 				clientList[i].emit('startGame',data);
 			}
 			setTimeout(function(){
-				for(var i = 0; i < clientList.length; i++){
-					clientList[i].emit('gameOver',playerList);			//prob is here. make this as object
-					delete(clientList);
-					delete(playerList);
+				if(gameStarted){
+					for(var i = 0; i < clientList.length; i++){
+						clientList[i].emit('gameOver',playerList);
+					}
+					clientList = null;									 //delete clientList
+					playerList = null;									//delete playerList
 					gameStarted = false;
 				}
 			},gameTime);
 		}
 	});
 	function updateAll(data){
-		for(var i = 0; i < clientList.length; i++){
-			clientList[i].emit('update',data);
+		if(clientList){
+			for(var i = 0; i < clientList.length; i++){
+				clientList[i].emit('update',data);
+			}
 		}
 	}
 }
@@ -183,19 +203,4 @@ function readPuzzle(puzzleFilePath){
 			puzzle.push(lines[i].split("\t"));
 		}
 	});
-}
-
-function Player(){};
-Player.prototype.name = 'player';
-Player.prototype.score = 0;
-
-var playerList = new Array();
-playerList.incScore = function(name,incFactor){
-	var i;
-	for(i = 0; i < this.length; i++){
-		if(this[i].name === name){
-			this[i].score += incFactor;
-			break;
-		}
-	}
 }

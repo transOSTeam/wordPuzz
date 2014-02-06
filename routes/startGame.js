@@ -43,7 +43,7 @@ exports.initGame = function(){
 }
 
 exports.start = function(req,res){
-	if(!req.session.name)
+	if(!req.session.name || playerList.length === 0)
 		res.redirect("/");
 	else if(gameStarted)
 		res.render('error', {errorMsg: "Sorry game has started"});
@@ -52,8 +52,6 @@ exports.start = function(req,res){
 		var temp, i = 0;
 		if(!clientList)
 			clientList = new Array();
-		if(!playerList)
-			playerList = new PlayerList();
 		if(playerList[0].name === req.session.name){
 			captainName = req.session.name;
 			captain = true;
@@ -99,7 +97,7 @@ exports.sockOnConnection = function (socket) {
 						clientList[i].emit('gameOver',playerList);
 					}
 					clientList = null;									 //delete clientList
-					playerList = null;									//delete playerList
+					playerList = new PlayerList();									//delete playerList
 					gameStarted = false;
 				}
 			},gameTime);

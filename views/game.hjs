@@ -6,7 +6,7 @@
 
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="text/javascript">
-			var socket = io.connect('http://localhost');
+			var socket = io.connect('http://wordpuzz.herokuapp.com');
 			var playerName = "{{player}}";
 			var isCaptain = {{captain}};
 			window.onload = function(){

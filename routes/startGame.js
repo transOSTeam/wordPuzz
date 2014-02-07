@@ -7,6 +7,7 @@ var clientList;
 var gameStarted = false;
 var gameTime = 60 * 1000;
 var captainName;
+var saveServer;
 fs = require('fs');
 
 
@@ -55,6 +56,10 @@ exports.start = function(req,res){
 		if(playerList[0].name === req.session.name){
 			captainName = req.session.name;
 			captain = true;
+			saveServer = setTimeout(function(){
+				clientList = null;									 //delete clientList
+				playerList = new PlayerList();									//delete playerList
+			},gameTime/2);
 		}
 		res.render('game', {player: req.session.name, captain : captain, hostName : req.headers.host});
 	}
@@ -91,6 +96,7 @@ exports.sockOnConnection = function (socket) {
 			for(var i = 0; i < clientList.length; i++){
 				clientList[i].emit('startGame',data);
 			}
+			clearTimeout(saveServer);
 			setTimeout(function(){
 				if(gameStarted){
 					for(var i = 0; i < clientList.length; i++){

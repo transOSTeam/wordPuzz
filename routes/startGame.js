@@ -5,7 +5,7 @@ var dictionary;
 var puzzleFilePath = "public/puzzles/puzz1.txt"
 var clientList;
 var gameStarted = false;
-var gameTime = 120 * 1000;
+var gameTime = 60 * 1000;
 var captainName;
 fs = require('fs');
 
@@ -100,7 +100,7 @@ exports.sockOnConnection = function (socket) {
 					playerList = new PlayerList();									//delete playerList
 					gameStarted = false;
 				}
-			},gameTime/clientList.length);
+			},gameTime);
 		}
 	});
 	function updateAll(data){

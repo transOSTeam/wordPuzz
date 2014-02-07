@@ -14,10 +14,14 @@
 				var errorSound = document.getElementById("errorSound");
 				if(isCaptain){
 					var startButton = document.createElement("BUTTON");
+					var startInstruction = document.createElement("p");
+					startInstruction.innerHTML = "Start the game when all the participants are connected"
 					startButton.innerHTML = "start game";
 					startButton.onclick = function(){
 						socket.emit('startGame', {playerName:playerName});
 					};
+					puzzleContainer.appendChild(startInstruction);
+					puzzleContainer.appendChild(document.createElement("br"))
 					puzzleContainer.appendChild(startButton);
 				}
 				else{

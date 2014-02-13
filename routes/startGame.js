@@ -2,10 +2,10 @@
 rowSize = 20;				//global
 var puzzle;						//global!
 var dictionary;
-var puzzleFilePath = "public/puzzles/puzz1.txt"
 var clientList;
 var gameStarted = false;
-var gameTime = 60 * 1000;
+var gameTime = 120 * 1000;
+var startGameTimeOut = gameTime/2;
 var captainName;
 var saveServer;
 fs = require('fs');
@@ -30,6 +30,9 @@ var playerList;
 
 exports.initGame = function(){
 	//generatePuzzle(rowSize);			//populate global variable puzzle
+	var rndPuzzFile = Math.floor((Math.random()*5)+1);		//total puzzle files are 5; pick random in 1 to 5
+	var puzzleFilePath = "public/puzzles/puzz" + rndPuzzFile + ".txt";
+	console.log("random file: " + rndPuzzFile);
 	readPuzzle(puzzleFilePath);
 	fs.readFile('wordList.txt', 'ascii', function (err,data) {
 		if (err) {
@@ -56,10 +59,10 @@ exports.start = function(req,res){
 		if(playerList[0].name === req.session.name){
 			captainName = req.session.name;
 			captain = true;
-			saveServer = setTimeout(function(){
+			saveServer = setTimeout(function(){							//this is to prevent game lock if captain gets lost.
 				clientList = null;									 //delete clientList
 				playerList = new PlayerList();									//delete playerList
-			},gameTime/2);
+			},startGameTimeOut);
 		}
 		res.render('game', {player: req.session.name, captain : captain, hostName : req.headers.host});
 	}
